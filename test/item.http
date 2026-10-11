@@ -1,0 +1,21 @@
+### Criar um Item (Arma)
+POST http://localhost:8080/api/v1/items
+Content-Type: application/json
+
+{
+  "name": "Espada Enferrujada",
+  "type": "WEAPON",
+  "lore": "Uma lâmina esquecida pelo tempo, ainda letal.",
+  "image_url": "https://url-do-supabase.com/espada.png",
+  "properties": {
+    "damage": "1d6",
+    "damage_type": "Slashing",
+    "weight": 2.5
+  }
+}
+
+###
+
+### Buscar um Item por ID
+GET http://localhost:8080/api/v1/items/1
+Accept: application/json
