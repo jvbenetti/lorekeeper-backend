@@ -24,7 +24,10 @@ func ConnectDatabase() *gorm.DB {
 	}
 
 	// Connect PostgreSQL in Supabase
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  dsn,
+		PreferSimpleProtocol: true, // To Supabase
+	}), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
