@@ -12,18 +12,19 @@ import (
 func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	// 1. Init repos
 	entityRepo := &repository.EntityRepository{DB: db}
-	// Futuramente: locationRepo := &repository.LocationRepository{DB: db}
-	// Futuramente: itemRepo := &repository.ItemRepository{DB: db}
+	locationRepo := &repository.LocationRepository{DB: db}
+	itemRepo := &repository.ItemRepository{DB: db}
 
 	// 2. Init Handlers
 	entityHandler := &handlers.EntityHandler{Repo: entityRepo}
-	// Futuramente: locationHandler := &handlers.LocationHandler{Repo: locationRepo}
+	locationHandler := &handlers.LocationHandler{Repo: locationRepo}
+	itemHandler := &handlers.ItemHandler{Repo: itemRepo}
 
 	// 3. Creating base group
 	api := e.Group("/api/v1")
 
 	// 4. Register routes
 	EntityRoutes(api, entityHandler)
-	// Futuramente: LocationRoutes(api, locationHandler)
-	// Futuramente: ItemRoutes(api, itemHandler)
+	LocationRoutes(api, locationHandler)
+	ItemRoutes(api, itemHandler)
 }
