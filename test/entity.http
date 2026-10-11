@@ -1,0 +1,22 @@
+### Criar um Monstro
+POST http://localhost:8080/api/v1/entities
+Content-Type: application/json
+
+{
+  "name": "Goblin Saqueador",
+  "type": "MONSTER",
+  "lore": "Uma criatura vil que se esconde nas sombras das cavernas.",
+  "image_url": "https://url-do-supabase.com/goblin.png",
+  "stats": {
+    "hp": 15,
+    "strength": 8,
+    "dexterity": 14,
+    "actions": ["Mordida", "Facada"]
+  }
+}
+
+###
+
+### Buscar um Monstro por ID
+GET http://localhost:8080/api/v1/entities/1
+Accept: application/json
