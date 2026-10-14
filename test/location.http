@@ -14,3 +14,23 @@ Content-Type: application/json
 ### Buscar um Local por ID
 GET http://localhost:8080/api/v1/locations/1
 Accept: application/json
+
+### Test with all fields:
+### Criar um Local (Dungeon DENTRO da Cidade 1)
+POST http://localhost:8080/api/v1/locations
+Content-Type: application/json
+
+{
+  "name": "Catacumbas dos Reis Esquecidos",
+  "type": "DUNGEON",
+  "lore": "Os túneis labirínticos sob Lamúria. O ar é pesado, cheira a ozônio e morte. As paredes são adornadas com os ossos dos traidores da coroa.",
+  "image_url": "https://url-do-supabase.com/catacumbas.png",
+  "parent_id": 1
+}
+# Nota: O parent_id: 1 indica que esta dungeon fica DENTRO do local com ID 1 (ex: a Cidade de Lamúria que criamos no teste anterior).
+
+###
+
+### Buscar Local (Deve trazer as subáreas e itens caso existam)
+GET http://localhost:8080/api/v1/locations/2
+Accept: application/json
