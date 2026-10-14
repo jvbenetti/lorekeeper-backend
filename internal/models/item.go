@@ -7,6 +7,23 @@ import (
 	"gorm.io/gorm"
 )
 
+type ItemType string
+
+const (
+	ItemWeapon   ItemType = "WEAPON"
+	ItemArmor    ItemType = "ARMOR"
+	ItemArtifact ItemType = "ARTIFACT"
+	ItemPotion   ItemType = "POTION"
+)
+
+func (i ItemType) IsValid() bool {
+	switch i {
+	case ItemWeapon, ItemArmor, ItemArtifact, ItemPotion:
+		return true
+	}
+	return false
+}
+
 // Item represents Weapons, Armor, Artifacts, etc.
 type Item struct {
 	ID         uint           `gorm:"primaryKey" json:"id"`
