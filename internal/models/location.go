@@ -6,13 +6,32 @@ import (
 	"gorm.io/gorm"
 )
 
+type LocationType string
+
+const (
+	LocationCity     LocationType = "CITY"
+	LocationDungeon  LocationType = "DUNGEON"
+	LocationHouse    LocationType = "HOUSE"
+	LocationCastle   LocationType = "CASTLE"
+	LocationHistoric LocationType = "HISTORIC"
+)
+
+// IsValid verifica se o literal enviado existe na nossa lista
+func (l LocationType) IsValid() bool {
+	switch l {
+	case LocationCity, LocationDungeon, LocationHouse, LocationCastle, LocationHistoric:
+		return true
+	}
+	return false
+}
+
 // Location represents Cities, Dungeons, Cemeteries, etc.
 type Location struct {
-	ID       uint   `gorm:"primaryKey" json:"id"`
-	Name     string `gorm:"size:255;not null" json:"name"`
-	Type     string `gorm:"size:50;not null" json:"type"`
-	Lore     string `gorm:"type:text" json:"lore"`
-	ImageURL string `gorm:"size:500" json:"image_url"`
+	ID       uint         `gorm:"primaryKey" json:"id"`
+	Name     string       `gorm:"size:255;not null" json:"name"`
+	Type     LocationType `gorm:"size:50;not null" json:"type"`
+	Lore     string       `gorm:"type:text" json:"lore"`
+	ImageURL string       `gorm:"size:500" json:"image_url"`
 
 	// Hierarchy (A dungeon inside a city, etc.)
 	ParentID *uint      `json:"parent_id"`
