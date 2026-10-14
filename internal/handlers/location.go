@@ -18,6 +18,13 @@ func (h *LocationHandler) Create(c echo.Context) error {
 	if err := c.Bind(&location); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Dados inválidos"})
 	}
+
+	if !location.Type.IsValid() {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Tipo de local inválido. Tipos permitidos: CITY, DUNGEON, HOUSE, CASTLE, HISTORIC",
+		})
+	}
+
 	if err := h.Repo.Create(&location); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao salvar"})
 	}
