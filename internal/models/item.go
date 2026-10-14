@@ -28,7 +28,7 @@ func (i ItemType) IsValid() bool {
 type Item struct {
 	ID         uint           `gorm:"primaryKey" json:"id"`
 	Name       string         `gorm:"size:255;not null" json:"name"`
-	Type       string         `gorm:"size:50;not null" json:"type"`
+	Type       ItemType       `gorm:"size:50;not null" json:"type"`
 	Lore       string         `gorm:"type:text" json:"lore"`
 	ImageURL   string         `gorm:"size:500" json:"image_url"`
 	Properties datatypes.JSON `json:"properties"` // JSONB for damage, rarity, effects
