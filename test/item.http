@@ -19,3 +19,42 @@ Content-Type: application/json
 ### Buscar um Item por ID
 GET http://localhost:8080/api/v1/items/1
 Accept: application/json
+
+### Test with all fields:
+### Create Item (Legendary weapon)
+POST http://localhost:8080/api/v1/items
+Content-Type: application/json
+
+{
+  "name": "Lâmina Sugadora de Almas",
+  "type": "WEAPON",
+  "lore": "Forjada no coração do abismo, esta espada negra pulsa com uma luz arroxeada. Ela bebe a vitalidade de quem corta.",
+  "image_url": "https://url-do-supabase.com/espada-negra.png",
+  "properties": {
+    "weapon_type": "Martial Melee Weapon",
+    "subtype": "Longsword",
+    "rarity": "Legendary",
+    "attunement_required": true,
+    "damage": "1d8 (1d10 versatile)",
+    "damage_type": "Slashing",
+    "weight": "3 lb.",
+    "magic_bonus": "+3",
+    "special_effects": [
+      {
+        "name": "Sede de Sangue",
+        "description": "Ao atingir um crítico, você recupera HP igual à metade do dano necrótico causado."
+      },
+      {
+        "name": "Dano Adicional",
+        "description": "Causa 2d6 de dano necrótico adicional em cada acerto."
+      }
+    ],
+    "curse": "O portador tem desvantagem em testes de resistência contra magias de controle mental."
+  }
+}
+
+###
+
+### Get weapon
+GET http://localhost:8080/api/v1/items/2
+Accept: application/json
