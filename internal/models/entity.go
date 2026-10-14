@@ -7,11 +7,28 @@ import (
 	"gorm.io/gorm"
 )
 
+type EntityType string
+
+const (
+	EntityMonster EntityType = "MONSTER"
+	EntityNPC     EntityType = "NPC"
+	EntityGod     EntityType = "GOD"
+	EntityDemigod EntityType = "DEMIGOD"
+)
+
+func (e EntityType) IsValid() bool {
+	switch e {
+	case EntityMonster, EntityNPC, EntityGod, EntityDemigod:
+		return true
+	}
+	return false
+}
+
 // Entity represents Monsters, NPCs, Gods, and Demigods
 type Entity struct {
 	ID       uint           `gorm:"primaryKey" json:"id"`
 	Name     string         `gorm:"size:255;not null" json:"name"`
-	Type     string         `gorm:"size:50;not null" json:"type"`
+	Type     EntityType     `gorm:"size:50;not null" json:"type"`
 	Lore     string         `gorm:"type:text" json:"lore"`
 	ImageURL string         `gorm:"size:500" json:"image_url"`
 	Stats    datatypes.JSON `json:"stats"` // JSONB for dynamic D&D sheets
