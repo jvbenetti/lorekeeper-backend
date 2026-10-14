@@ -18,6 +18,13 @@ func (h *ItemHandler) Create(c echo.Context) error {
 	if err := c.Bind(&item); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Dados inválidos"})
 	}
+
+	if !item.Type.IsValid() {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Tipo de item inválido. Tipos permitidos: WEAPON, ARMOR, ARTIFACT, POTION",
+		})
+	}
+
 	if err := h.Repo.Create(&item); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao salvar"})
 	}

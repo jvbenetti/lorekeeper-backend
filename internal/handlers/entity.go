@@ -21,6 +21,12 @@ func (h *EntityHandler) Create(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Formato de dados inválido"})
 	}
 
+	if !entity.Type.IsValid() {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Tipo de local entidade inválido. Tipos permitidos: NPC, GOD, MONSTER, DEMIGOD",
+		})
+	}
+
 	// Call repo to save
 	if err := h.Repo.Create(&entity); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao salvar entidade"})
