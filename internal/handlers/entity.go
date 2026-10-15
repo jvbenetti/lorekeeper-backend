@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -25,6 +26,15 @@ func (h *EntityHandler) Create(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Tipo de local entidade inválido. Tipos permitidos: NPC, GOD, MONSTER, DEMIGOD",
 		})
+	}
+
+	if entity.Type == models.EntityMonster && len(entity.Stats) > 0 {
+		var stats models.MonsterStats
+		if err := json.Unmarshal(entity.Stats, &stats); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"error": "O formato dos atributos (stats) do monstro está incorreto",
+			})
+		}
 	}
 
 	// Call repo to save
