@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -23,6 +24,15 @@ func (h *ItemHandler) Create(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Tipo de item inválido. Tipos permitidos: WEAPON, ARMOR, ARTIFACT, POTION",
 		})
+	}
+
+	if len(item.Properties) > 0 {
+		var properties models.ItemProperties
+		if err := json.Unmarshal(item.Properties, &properties); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"error": "O formato das propriedades (properties) do item está incorreto",
+			})
+		}
 	}
 
 	if err := h.Repo.Create(&item); err != nil {
