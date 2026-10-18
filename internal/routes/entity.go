@@ -9,4 +9,7 @@ import (
 func EntityRoutes(g *echo.Group, h *handlers.EntityHandler) {
 	g.POST("/entities", h.Create)
 	g.GET("/entities/:id", h.GetByID)
+
+	// Routes Many-to-Many
+	g.POST("/entities/:id/drops/:item_id", h.AddDrop)
 }
