@@ -45,6 +45,19 @@ func (h *EntityHandler) Create(c echo.Context) error {
 	return c.JSON(http.StatusCreated, entity)
 }
 
+func (h *LocationHandler) AddEntity(c echo.Context) error {
+	locID, _ := strconv.Atoi(c.Param("id"))
+	entID, _ := strconv.Atoi(c.Param("entity_id"))
+
+	if err := h.Repo.AddEntity(uint(locID), uint(entID)); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao vincular entidade ao local"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Entidade vinculada ao local com sucesso",
+	})
+}
+
 // GetByID handle with get route /entities/:id
 func (h *EntityHandler) GetByID(c echo.Context) error {
 	idParam := c.Param("id")
