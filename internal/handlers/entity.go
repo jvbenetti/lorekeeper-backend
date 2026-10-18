@@ -73,6 +73,19 @@ func (h *LocationHandler) AddItem(c echo.Context) error {
 	})
 }
 
+// AddDrop lida com a rota POST /entities/:id/drops/:item_id
+func (h *EntityHandler) AddDrop(c echo.Context) error {
+	entID, _ := strconv.Atoi(c.Param("id"))
+	itemID, _ := strconv.Atoi(c.Param("item_id"))
+
+	if err := h.Repo.AddDrop(uint(entID), uint(itemID)); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao vincular drop ao monstro"})
+	}
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Item adicionado aos drops do monstro com sucesso",
+	})
+}
+
 // GetByID handle with get route /entities/:id
 func (h *EntityHandler) GetByID(c echo.Context) error {
 	idParam := c.Param("id")
