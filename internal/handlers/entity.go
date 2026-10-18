@@ -45,6 +45,7 @@ func (h *EntityHandler) Create(c echo.Context) error {
 	return c.JSON(http.StatusCreated, entity)
 }
 
+// AddEntity handle with POST /locations/:id/entities/:entity_id
 func (h *LocationHandler) AddEntity(c echo.Context) error {
 	locID, _ := strconv.Atoi(c.Param("id"))
 	entID, _ := strconv.Atoi(c.Param("entity_id"))
