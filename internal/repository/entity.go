@@ -33,6 +33,15 @@ func (r *LocationRepository) AddItem(locationID uint, itemID uint) error {
 	return r.DB.Model(&location).Association("Items").Append(&item)
 }
 
+// AddDrop vinc a Item that exists and a Entity that exists
+func (r *EntityRepository) AddDrop(entityID uint, itemID uint) error {
+	entity := models.Entity{ID: entityID}
+	item := models.Item{ID: itemID}
+
+	// O GORM vai na tabela invisível 'entity_drops' e insere a relação (entity_id, item_id)
+	return r.DB.Model(&entity).Association("Drops").Append(&item)
+}
+
 // GetByID retrieves an Entity by its ID, preloading many-to-many relationships only if needed.
 func (r *EntityRepository) GetByID(id uint) (*models.Entity, error) {
 	var entity models.Entity
