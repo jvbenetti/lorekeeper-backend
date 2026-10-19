@@ -59,20 +59,6 @@ func (h *LocationHandler) AddEntity(c echo.Context) error {
 	})
 }
 
-// AddItem handle with POST /locations/:id/items/:item_id
-func (h *LocationHandler) AddItem(c echo.Context) error {
-	locID, _ := strconv.Atoi(c.Param("id"))
-	itemID, _ := strconv.Atoi(c.Param("item_id"))
-
-	if err := h.Repo.AddItem(uint(locID), uint(itemID)); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao vincular item ao local"})
-	}
-
-	return c.JSON(http.StatusOK, map[string]string{
-		"message": "Item escondido no local com sucesso",
-	})
-}
-
 // AddDrop lida com a rota POST /entities/:id/drops/:item_id
 func (h *EntityHandler) AddDrop(c echo.Context) error {
 	entID, _ := strconv.Atoi(c.Param("id"))

@@ -31,6 +31,20 @@ func (h *LocationHandler) Create(c echo.Context) error {
 	return c.JSON(http.StatusCreated, location)
 }
 
+// AddItem handle with POST /locations/:id/items/:item_id
+func (h *LocationHandler) AddItem(c echo.Context) error {
+	locID, _ := strconv.Atoi(c.Param("id"))
+	itemID, _ := strconv.Atoi(c.Param("item_id"))
+
+	if err := h.Repo.AddItem(uint(locID), uint(itemID)); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao vincular item ao local"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Item escondido no local com sucesso",
+	})
+}
+
 func (h *LocationHandler) GetByID(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	location, err := h.Repo.GetByID(uint(id))
