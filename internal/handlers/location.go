@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/jvbenetti/lorekeeper-backend.git/internal/dto/response"
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/models"
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/repository"
 	"github.com/labstack/echo/v4"
@@ -60,10 +61,60 @@ func (h *LocationHandler) AddItem(c echo.Context) error {
 }
 
 func (h *LocationHandler) GetByID(c echo.Context) error {
-	id, _ := strconv.Atoi(c.Param("id"))
+	idParam := c.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número"})
+	}
+
 	location, err := h.Repo.GetByID(uint(id))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Local não encontrado"})
 	}
-	return c.JSON(http.StatusOK, location)
+
+	resp := response.LocationResponse{
+		ID:          location.ID,
+		Name:        location.Name,
+		Type:        string(location.Type),
+		Lore:        location.Lore,
+		ImageURL:    location.ImageURL,
+		SubAreas:    []response.MinimalResource{},
+		Entities:    []response.MinimalResource{},
+		HiddenItems: []response.MinimalResource{},
+		EntityDrops: []response.MinimalResource{},
+	}
+
+	for _, sub := range location.SubAreas {
+		resp.SubAreas = append(
+			resp.SubAreas,
+			response.MinimalResource{
+				ID:   sub.ID,
+				Name: sub.Name,
+				Type: string(sub.Type)})
+	}
+	for _, item := range location.Items {
+		resp.HiddenItems = append(
+			resp.HiddenItems,
+			response.MinimalResource{
+				ID:   item.ID,
+				Name: item.Name,
+				Type: string(item.Type)})
+	}
+
+	// Get monsters drops
+	for _, ent := range location.Entities {
+		resp.Entities = append(
+			resp.Entities, response.MinimalResource{ID: ent.ID, Name: ent.Name, Type: string(ent.Type)})
+
+		for _, drop := range ent.Drops {
+			resp.EntityDrops = append(
+				resp.EntityDrops,
+				response.MinimalResource{
+					ID:   drop.ID,
+					Name: drop.Name,
+					Type: string(drop.Type)})
+		}
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
