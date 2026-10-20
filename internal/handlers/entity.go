@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/jvbenetti/lorekeeper-backend.git/internal/dto/response"
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/models"
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/repository"
 	"github.com/labstack/echo/v4"
@@ -71,5 +72,34 @@ func (h *EntityHandler) GetByID(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Entidade não encontrada"})
 	}
 
-	return c.JSON(http.StatusOK, entity)
+	// Montando a resposta enxuta
+	resp := response.EntityResponse{
+		ID:        entity.ID,
+		Name:      entity.Name,
+		Type:      string(entity.Type),
+		Lore:      entity.Lore,
+		ImageURL:  entity.ImageURL,
+		Stats:     entity.Stats,
+		Locations: []response.MinimalResource{},
+		Drops:     []response.MinimalResource{},
+	}
+
+	for _, loc := range entity.Locations {
+		resp.Locations = append(
+			resp.Locations,
+			response.MinimalResource{
+				ID:   loc.ID,
+				Name: loc.Name,
+				Type: string(loc.Type)})
+	}
+	for _, drop := range entity.Drops {
+		resp.Drops = append(
+			resp.Drops,
+			response.MinimalResource{
+				ID:   drop.ID,
+				Name: drop.Name,
+				Type: string(drop.Type)})
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
