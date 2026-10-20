@@ -72,6 +72,9 @@ Content-Type: application/json
   }
 }
 
+### Adicionar a "Lâmina Sugadora de Almas" (ID 2) aos drops do "Senhor da Podridão" (ID 2)
+POST http://localhost:8080/api/v1/entities/2/drops/2
+
 ###
 
 ### Get monster
