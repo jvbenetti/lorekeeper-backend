@@ -16,6 +16,12 @@ func (r *LocationRepository) Create(location *models.Location) error {
 func (r *LocationRepository) GetByID(id uint) (*models.Location, error) {
 	var location models.Location
 	// Preload get itens and monsters of location
-	err := r.DB.Preload("Entities").Preload("Items").Preload("SubAreas").First(&location, id).Error
+	err := r.DB.
+		Preload("Entities").
+		Preload("Items").
+		Preload("SubAreas").
+		Preload("Entities.Drop").
+		First(&location, id).Error
+
 	return &location, err
 }
