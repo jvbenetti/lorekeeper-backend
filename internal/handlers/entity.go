@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/models"
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/repository"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 type EntityHandler struct {
@@ -69,7 +71,10 @@ func (h *EntityHandler) GetByID(c echo.Context) error {
 
 	entity, err := h.Repo.GetByID(uint(id))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "Entidade não encontrada"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Entidade não encontrada"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
 	// Montando a resposta enxuta
