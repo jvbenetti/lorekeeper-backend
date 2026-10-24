@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/jvbenetti/lorekeeper-backend.git/internal/dto/response"
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/models"
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/repository"
 	"github.com/labstack/echo/v4"
@@ -48,4 +49,23 @@ func (h *ItemHandler) GetByID(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Item não encontrado"})
 	}
 	return c.JSON(http.StatusOK, item)
+}
+
+func (h *ItemHandler) GetAll(c echo.Context) error {
+	items, err := h.Repo.GetAll()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao buscar itens"})
+	}
+
+	var resp []response.MinimalResource
+
+	for _, ent := range items {
+		resp = append(resp, response.MinimalResource{
+			ID:   ent.ID,
+			Name: ent.Name,
+			Type: string(ent.Type),
+		})
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }

@@ -103,3 +103,22 @@ func (h *EntityHandler) GetByID(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, resp)
 }
+
+func (h *EntityHandler) GetAll(c echo.Context) error {
+	entities, err := h.Repo.GetAll()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao buscar entidades"})
+	}
+
+	var resp []response.MinimalResource
+
+	for _, ent := range entities {
+		resp = append(resp, response.MinimalResource{
+			ID:   ent.ID,
+			Name: ent.Name,
+			Type: string(ent.Type),
+		})
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}

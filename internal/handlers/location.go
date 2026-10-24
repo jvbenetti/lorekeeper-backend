@@ -118,3 +118,22 @@ func (h *LocationHandler) GetByID(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, resp)
 }
+
+func (h *LocationHandler) GetAll(c echo.Context) error {
+	locations, err := h.Repo.GetAll()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao buscar locais"})
+	}
+
+	var resp []response.MinimalResource
+
+	for _, loc := range locations {
+		resp = append(resp, response.MinimalResource{
+			ID:   loc.ID,
+			Name: loc.Name,
+			Type: string(loc.Type),
+		})
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
