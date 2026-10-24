@@ -55,8 +55,17 @@ func (r *EntityRepository) GetByID(id uint) (*models.Entity, error) {
 	return &entity, nil
 }
 
-func (r *EntityRepository) GetAll() ([]models.Entity, error) {
+func (r *EntityRepository) GetAll(entityType string, search string) ([]models.Entity, error) {
 	var entities []models.Entity
-	err := r.DB.Find(&entities).Error
+	query := r.DB.Model(&models.Entity{})
+
+	if entityType != "" {
+		query = query.Where("type = ?", entityType)
+	}
+	if search != "" {
+		query = query.Where("name ILIKE ?", "%"+search+"%")
+	}
+
+	err := query.Find(&entities).Error
 	return entities, err
 }
