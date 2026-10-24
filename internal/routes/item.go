@@ -7,5 +7,6 @@ import (
 
 func ItemRoutes(g *echo.Group, h *handlers.ItemHandler) {
 	g.POST("/items", h.Create)
+	g.GET("/items", h.GetAll)
 	g.GET("/items/:id", h.GetByID)
 }

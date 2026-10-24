@@ -7,6 +7,7 @@ import (
 
 func LocationRoutes(g *echo.Group, h *handlers.LocationHandler) {
 	g.POST("/locations", h.Create)
+	g.GET("/locations", h.GetAll)
 	g.GET("/locations/:id", h.GetByID)
 
 	// Routes Many-to-Many
