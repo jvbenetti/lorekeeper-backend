@@ -31,3 +31,9 @@ func (r *LocationRepository) GetAll() ([]models.Location, error) {
 	err := r.DB.Find(&locations).Error
 	return locations, err
 }
+
+func (r *LocationRepository) RemoveItem(locationID uint, itemID uint) error {
+	location := models.Location{ID: locationID}
+	item := models.Item{ID: itemID}
+	return r.DB.Model(&location).Association("Items").Delete(&item)
+}
