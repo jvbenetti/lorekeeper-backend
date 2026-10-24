@@ -54,3 +54,9 @@ func (r *EntityRepository) GetByID(id uint) (*models.Entity, error) {
 
 	return &entity, nil
 }
+
+func (r *EntityRepository) GetAll() ([]models.Entity, error) {
+	var entities []models.Entity
+	err := r.DB.Find(&entities).Error
+	return entities, err
+}

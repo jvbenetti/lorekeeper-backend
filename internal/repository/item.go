@@ -19,3 +19,9 @@ func (r *ItemRepository) GetByID(id uint) (*models.Item, error) {
 	err := r.DB.Preload("Locations").Preload("DroppedBy").First(&item, id).Error
 	return &item, err
 }
+
+func (r *ItemRepository) GetAll() ([]models.Item, error) {
+	var items []models.Item
+	err := r.DB.Find(&items).Error
+	return items, err
+}

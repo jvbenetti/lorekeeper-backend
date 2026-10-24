@@ -25,3 +25,9 @@ func (r *LocationRepository) GetByID(id uint) (*models.Location, error) {
 
 	return &location, err
 }
+
+func (r *LocationRepository) GetAll() ([]models.Location, error) {
+	var locations []models.Location
+	err := r.DB.Find(&locations).Error
+	return locations, err
+}
