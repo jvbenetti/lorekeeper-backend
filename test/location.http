@@ -61,3 +61,7 @@ POST http://localhost:8080/api/v1/locations/4/items/2
 ### Buscar as Catacumbas para ver TUDO (Monstros e Itens nela)
 GET http://localhost:8080/api/v1/locations/4
 Accept: application/jsond
+
+### Listar todas as Locations
+GET http://localhost:8080/api/v1/locations
+Accept: application/json
