@@ -20,7 +20,7 @@ func (r *LocationRepository) GetByID(id uint) (*models.Location, error) {
 		Preload("Entities").
 		Preload("Items").
 		Preload("SubAreas").
-		Preload("Entities.Drop").
+		Preload("Entities.Drops").
 		First(&location, id).Error
 
 	return &location, err
