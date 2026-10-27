@@ -110,15 +110,19 @@ func (h *EntityHandler) GetByID(c echo.Context) error {
 }
 
 func (h *EntityHandler) GetAll(c echo.Context) error {
-	entities, err := h.Repo.GetAll()
+	// Pega os valores da URL (ex: ?type=GOD&search=podridão)
+	entityType := c.QueryParam("type")
+	search := c.QueryParam("search")
+
+	// Passa pro repositório
+	entities, err := h.Repo.GetAll(entityType, search)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao buscar entidades"})
 	}
 
-	var resp []response.MinimalResource
-
+	var resp = []models.MinimalResource{}
 	for _, ent := range entities {
-		resp = append(resp, response.MinimalResource{
+		resp = append(resp, models.MinimalResource{
 			ID:   ent.ID,
 			Name: ent.Name,
 			Type: string(ent.Type),
