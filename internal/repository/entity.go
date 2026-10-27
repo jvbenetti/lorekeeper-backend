@@ -63,6 +63,7 @@ func (r *EntityRepository) GetAll(entityType string, search string) ([]models.En
 		query = query.Where("type = ?", entityType)
 	}
 	if search != "" {
+		// ILIKE ignore uppercase
 		query = query.Where("name ILIKE ?", "%"+search+"%")
 	}
 
