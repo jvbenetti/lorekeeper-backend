@@ -55,18 +55,24 @@ func (r *EntityRepository) GetByID(id uint) (*models.Entity, error) {
 	return &entity, nil
 }
 
+// GetAll get all Entity's, with filters
 func (r *EntityRepository) GetAll(entityType string, search string) ([]models.Entity, error) {
 	var entities []models.Entity
+
 	query := r.DB.Model(&models.Entity{})
 
+	// If user sent a type
 	if entityType != "" {
 		query = query.Where("type = ?", entityType)
 	}
+
+	// If user sent a search term
 	if search != "" {
-		// ILIKE ignore uppercase
+		// ILIKE in PostgreSQL ignore uppercases and downcases
 		query = query.Where("name ILIKE ?", "%"+search+"%")
 	}
 
+	// Executa a busca no banco
 	err := query.Find(&entities).Error
 	return entities, err
 }
