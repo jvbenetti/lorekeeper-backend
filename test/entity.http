@@ -72,6 +72,84 @@ Content-Type: application/json
   }
 }
 
+### Criar um Deus Cármico
+POST http://localhost:8080/api/v1/entities
+Content-Type: application/json
+
+{
+  "name": "Valerius, o Juiz de Ferro",
+  "type": "GOD",
+  "lore": "Uma divindade ancestral da ordem absoluta. Dizem que ele forjou as correntes que prendem os traidores no fundo das catacumbas.",
+  "image_url": "https://url-do-supabase.com/valerius-deus.png",
+  "stats": {
+    "armor_class": 22,
+    "hit_points": "350 (20d20 + 140)",
+    "speed": "15 m., fly 30 m.",
+    "attributes": {
+      "STR": 26,
+      "DEX": 18,
+      "CON": 24,
+      "INT": 22,
+      "WIS": 26,
+      "CHA": 20
+    },
+    "saving_throws": ["STR +16", "CON +15", "WIS +16"],
+    "skills": ["Insight +16", "Perception +16", "Religion +14"],
+    "damage_immunities": ["Radiant", "Bludgeoning, Piercing, and Slashing from Nonmagical Attacks"],
+    "condition_immunities": ["Charmed", "Exhaustion", "Frightened", "Paralyzed", "Poisoned"],
+    "senses": ["Truesight 36 m.", "Passive Perception 26"],
+    "challenge_rating": "26 (90,000 XP)",
+    "actions": [
+      {
+        "name": "Veredito (Martelo Divino)",
+        "type": "Melee Weapon Attack",
+        "hit": "+16",
+        "reach": "3 m.",
+        "damage": "24 (4d8 + 8) bludgeoning damage plus 18 (4d8) radiant damage",
+        "effect": "Se o alvo for uma criatura caótica, ela sofre dano radiante extra."
+      }
+    ]
+  }
+}
+
+###
+
+### Criar um NPC
+POST http://localhost:8080/api/v1/entities
+Content-Type: application/json
+
+{
+  "name": "Elara, a Tecelã de Segredos",
+  "type": "NPC",
+  "lore": "A dona da taverna 'Corvo Cego'. Ela sabe quem entra e sai de Lamúria e vende essas informações pelo preço certo.",
+  "image_url": "https://url-do-supabase.com/elara-npc.png",
+  "stats": {
+    "armor_class": 12,
+    "hit_points": "22 (4d8 + 4)",
+    "speed": "9 m.",
+    "attributes": {
+      "STR": 10,
+      "DEX": 14,
+      "CON": 12,
+      "INT": 16,
+      "WIS": 16,
+      "CHA": 18
+    },
+    "skills": ["Deception +6", "Insight +5", "Persuasion +6"],
+    "languages": ["Common", "Thieves' Cant"],
+    "challenge_rating": "1 (200 XP)",
+    "actions": [
+      {
+        "name": "Adaga Escondida",
+        "type": "Melee Weapon Attack",
+        "hit": "+4",
+        "reach": "1.5 m.",
+        "damage": "4 (1d4 + 2) piercing damage"
+      }
+    ]
+  }
+}
+
 ### Adicionar a "Lâmina Sugadora de Almas" (ID 2) aos drops do "Senhor da Podridão" (ID 2)
 POST http://localhost:8080/api/v1/entities/2/drops/2
 
