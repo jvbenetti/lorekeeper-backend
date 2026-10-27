@@ -120,9 +120,9 @@ func (h *EntityHandler) GetAll(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao buscar entidades"})
 	}
 
-	var resp = []models.MinimalResource{}
+	var resp []response.MinimalResource
 	for _, ent := range entities {
-		resp = append(resp, models.MinimalResource{
+		resp = append(resp, response.MinimalResource{
 			ID:   ent.ID,
 			Name: ent.Name,
 			Type: string(ent.Type),
