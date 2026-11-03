@@ -8,11 +8,21 @@ Content-Type: application/json
   "lore": "Uma criatura vil que se esconde nas sombras das cavernas.",
   "image_url": "https://url-do-supabase.com/goblin.png",
   "stats": {
-    "hp": 15,
-    "strength": 8,
-    "dexterity": 14,
-    "AC": 10,
-    "actions": ["Mordida", "Facada"]
+    "armor_class": 10,
+    "hit_points": "15 (2d6 + 8)",
+    "speed": "9 m.",
+    "attributes": {
+      "STR": 8,
+      "DEX": 14
+    },
+    "actions": [
+      {
+        "name": "Mordida"
+      },
+      {
+        "name": "Facada"
+      }
+    ]
   }
 }
 

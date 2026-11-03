@@ -10,7 +10,7 @@ Content-Type: application/json
   "properties": {
     "damage": "1d6",
     "damage_type": "Slashing",
-    "weight": 2.5
+    "weight": "2.5 lb."
   }
 }
 
