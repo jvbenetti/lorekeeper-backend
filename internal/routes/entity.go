@@ -10,7 +10,10 @@ func EntityRoutes(g *echo.Group, h *handlers.EntityHandler) {
 	g.POST("/entities", h.Create)
 	g.GET("/entities", h.GetAll)
 	g.GET("/entities/:id", h.GetByID)
+	g.PUT("/entities/:id", h.Update)
+	g.DELETE("/entities/:id", h.Delete)
 
 	// Routes Many-to-Many
 	g.POST("/entities/:id/drops/:item_id", h.AddDrop)
+	g.DELETE("/entities/:id/drops/:item_id", h.RemoveDrop)
 }

@@ -89,12 +89,16 @@ func (h *ItemHandler) GetByID(c echo.Context) error {
 }
 
 func (h *ItemHandler) GetAll(c echo.Context) error {
-	items, err := h.Repo.GetAll()
+	itemType := c.QueryParam("type")
+	search := c.QueryParam("search")
+	rarity := c.QueryParam("rarity")
+
+	items, err := h.Repo.GetAll(itemType, search, rarity)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao buscar itens"})
 	}
 
-	var resp []response.MinimalResource
+	resp := []response.MinimalResource{}
 
 	for _, ent := range items {
 		resp = append(resp, response.MinimalResource{
@@ -105,4 +109,61 @@ func (h *ItemHandler) GetAll(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, resp)
+}
+
+func (h *ItemHandler) Update(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número"})
+	}
+
+	item, err := h.Repo.GetByID(uint(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Item não encontrado"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	if err := c.Bind(item); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Dados inválidos"})
+	}
+	item.ID = uint(id)
+
+	if !item.Type.IsValid() {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Tipo de item inválido. Tipos permitidos: WEAPON, ARMOR, ARTIFACT, POTION",
+		})
+	}
+
+	if len(item.Properties) > 0 {
+		var properties models.ItemProperties
+		if err := json.Unmarshal(item.Properties, &properties); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"error": "O formato das propriedades (properties) do item está incorreto",
+			})
+		}
+	}
+
+	if err := h.Repo.Update(item); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao atualizar item"})
+	}
+
+	return c.JSON(http.StatusOK, item)
+}
+
+func (h *ItemHandler) Delete(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número"})
+	}
+
+	if err := h.Repo.Delete(uint(id)); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Item não encontrado"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao deletar item"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Item removido com sucesso"})
 }

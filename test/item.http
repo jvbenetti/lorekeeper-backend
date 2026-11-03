@@ -62,3 +62,20 @@ Accept: application/json
 ### Listar todas os Itens
 GET http://localhost:8080/api/v1/items
 Accept: application/json
+
+### Filtrar Itens por tipo, busca e raridade
+GET http://localhost:8080/api/v1/items?type=WEAPON&search=lâmina&rarity=Legendary
+Accept: application/json
+
+### Atualizar um Item
+PUT http://localhost:8080/api/v1/items/1
+Content-Type: application/json
+
+{
+  "name": "Espada Restaurada",
+  "type": "WEAPON",
+  "lore": "A lâmina foi reforjada por um ferreiro anão."
+}
+
+### Deletar um Item
+DELETE http://localhost:8080/api/v1/items/1

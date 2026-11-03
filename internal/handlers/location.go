@@ -76,6 +76,48 @@ func (h *LocationHandler) AddItem(c echo.Context) error {
 	})
 }
 
+// RemoveEntity handle with DELETE /locations/:id/entities/:entity_id
+func (h *LocationHandler) RemoveEntity(c echo.Context) error {
+	locID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID do local deve ser um número"})
+	}
+
+	entID, err := strconv.Atoi(c.Param("entity_id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID da entidade deve ser um número"})
+	}
+
+	if err := h.Repo.RemoveEntity(uint(locID), uint(entID)); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao remover entidade do local"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Entidade removida do local com sucesso",
+	})
+}
+
+// RemoveItem handle with DELETE /locations/:id/items/:item_id
+func (h *LocationHandler) RemoveItem(c echo.Context) error {
+	locID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID do local deve ser um número"})
+	}
+
+	itemID, err := strconv.Atoi(c.Param("item_id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID do item deve ser um número"})
+	}
+
+	if err := h.Repo.RemoveItem(uint(locID), uint(itemID)); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao remover item do local"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Item removido do local com sucesso",
+	})
+}
+
 func (h *LocationHandler) GetByID(c echo.Context) error {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
@@ -143,12 +185,15 @@ func (h *LocationHandler) GetByID(c echo.Context) error {
 }
 
 func (h *LocationHandler) GetAll(c echo.Context) error {
-	locations, err := h.Repo.GetAll()
+	locationType := c.QueryParam("type")
+	search := c.QueryParam("search")
+
+	locations, err := h.Repo.GetAll(locationType, search)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao buscar locais"})
 	}
 
-	var resp []response.MinimalResource
+	resp := []response.MinimalResource{}
 
 	for _, loc := range locations {
 		resp = append(resp, response.MinimalResource{
@@ -159,4 +204,52 @@ func (h *LocationHandler) GetAll(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, resp)
+}
+
+func (h *LocationHandler) Update(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número"})
+	}
+
+	location, err := h.Repo.GetByID(uint(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Local não encontrado"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	if err := c.Bind(location); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Dados inválidos"})
+	}
+	location.ID = uint(id)
+
+	if !location.Type.IsValid() {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Tipo de local inválido. Tipos permitidos: CITY, DUNGEON, HOUSE, CASTLE, HISTORIC",
+		})
+	}
+
+	if err := h.Repo.Update(location); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao atualizar local"})
+	}
+
+	return c.JSON(http.StatusOK, location)
+}
+
+func (h *LocationHandler) Delete(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número"})
+	}
+
+	if err := h.Repo.Delete(uint(id)); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Local não encontrado"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao deletar local"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Local removido com sucesso"})
 }

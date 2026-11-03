@@ -68,6 +68,27 @@ func (h *EntityHandler) AddDrop(c echo.Context) error {
 	})
 }
 
+// RemoveDrop lida com a rota DELETE /entities/:id/drops/:item_id
+func (h *EntityHandler) RemoveDrop(c echo.Context) error {
+	entID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID da entidade deve ser um número"})
+	}
+
+	itemID, err := strconv.Atoi(c.Param("item_id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID do item deve ser um número"})
+	}
+
+	if err := h.Repo.RemoveDrop(uint(entID), uint(itemID)); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao remover drop da entidade"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Item removido dos drops da entidade com sucesso",
+	})
+}
+
 // GetByID handle with get route /entities/:id
 func (h *EntityHandler) GetByID(c echo.Context) error {
 	idParam := c.Param("id")
@@ -127,7 +148,7 @@ func (h *EntityHandler) GetAll(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao buscar entidades"})
 	}
 
-	var resp []response.MinimalResource
+	resp := []response.MinimalResource{}
 	for _, ent := range entities {
 		resp = append(resp, response.MinimalResource{
 			ID:   ent.ID,
@@ -137,4 +158,63 @@ func (h *EntityHandler) GetAll(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, resp)
+}
+
+// Update handle with PUT /entities/:id
+func (h *EntityHandler) Update(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número"})
+	}
+
+	entity, err := h.Repo.GetByID(uint(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Entidade não encontrada"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	if err := c.Bind(entity); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Formato de dados inválido"})
+	}
+	entity.ID = uint(id)
+
+	if !entity.Type.IsValid() {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Tipo de local entidade inválido. Tipos permitidos: NPC, GOD, MONSTER, DEMIGOD",
+		})
+	}
+
+	if len(entity.Stats) > 0 {
+		var stats models.MonsterStats
+		if err := json.Unmarshal(entity.Stats, &stats); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"error": "O formato dos atributos (stats) da entidade está incorreto",
+			})
+		}
+	}
+
+	if err := h.Repo.Update(entity); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao atualizar entidade"})
+	}
+
+	return c.JSON(http.StatusOK, entity)
+}
+
+// Delete handle with DELETE /entities/:id
+func (h *EntityHandler) Delete(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número"})
+	}
+
+	if err := h.Repo.Delete(uint(id)); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Entidade não encontrada"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao deletar entidade"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Entidade removida com sucesso"})
 }
