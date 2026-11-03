@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // EntityRepository manages Monsters, NPCs, Gods, etc.
@@ -22,6 +23,31 @@ func (r *EntityRepository) AddDrop(entityID uint, itemID uint) error {
 
 	// O GORM vai na tabela invisível 'entity_drops' e insere a relação (entity_id, item_id)
 	return r.DB.Model(&entity).Association("Drops").Append(&item)
+}
+
+// RemoveDrop remove the relation between an Entity and an Item drop
+func (r *EntityRepository) RemoveDrop(entityID uint, itemID uint) error {
+	entity := models.Entity{ID: entityID}
+	item := models.Item{ID: itemID}
+
+	return r.DB.Model(&entity).Association("Drops").Delete(&item)
+}
+
+// Update updates an existing entity in the database
+func (r *EntityRepository) Update(entity *models.Entity) error {
+	return r.DB.Omit(clause.Associations).Save(entity).Error
+}
+
+// Delete soft-deletes an entity by ID
+func (r *EntityRepository) Delete(id uint) error {
+	res := r.DB.Delete(&models.Entity{}, id)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 // GetByID retrieves an Entity by its ID, preloading many-to-many relationships only if needed.
