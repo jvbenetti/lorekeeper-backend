@@ -31,11 +31,11 @@ func (h *EntityHandler) Create(c echo.Context) error {
 		})
 	}
 
-	if entity.Type == models.EntityMonster && len(entity.Stats) > 0 {
+	if len(entity.Stats) > 0 {
 		var stats models.MonsterStats
 		if err := json.Unmarshal(entity.Stats, &stats); err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{
-				"error": "O formato dos atributos (stats) do monstro está incorreto",
+				"error": "O formato dos atributos (stats) da entidade está incorreto",
 			})
 		}
 	}
@@ -50,8 +50,15 @@ func (h *EntityHandler) Create(c echo.Context) error {
 
 // AddDrop lida com a rota POST /entities/:id/drops/:item_id
 func (h *EntityHandler) AddDrop(c echo.Context) error {
-	entID, _ := strconv.Atoi(c.Param("id"))
-	itemID, _ := strconv.Atoi(c.Param("item_id"))
+	entID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID da entidade deve ser um número"})
+	}
+
+	itemID, err := strconv.Atoi(c.Param("item_id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID do item deve ser um número"})
+	}
 
 	if err := h.Repo.AddDrop(uint(entID), uint(itemID)); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao vincular drop ao monstro"})

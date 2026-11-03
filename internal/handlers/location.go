@@ -36,8 +36,15 @@ func (h *LocationHandler) Create(c echo.Context) error {
 
 // AddEntity handle with POST /locations/:id/entities/:entity_id
 func (h *LocationHandler) AddEntity(c echo.Context) error {
-	locID, _ := strconv.Atoi(c.Param("id"))
-	entID, _ := strconv.Atoi(c.Param("entity_id"))
+	locID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID do local deve ser um número"})
+	}
+
+	entID, err := strconv.Atoi(c.Param("entity_id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID da entidade deve ser um número"})
+	}
 
 	if err := h.Repo.AddEntity(uint(locID), uint(entID)); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao vincular entidade ao local"})
@@ -50,8 +57,15 @@ func (h *LocationHandler) AddEntity(c echo.Context) error {
 
 // AddItem handle with POST /locations/:id/items/:item_id
 func (h *LocationHandler) AddItem(c echo.Context) error {
-	locID, _ := strconv.Atoi(c.Param("id"))
-	itemID, _ := strconv.Atoi(c.Param("item_id"))
+	locID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID do local deve ser um número"})
+	}
+
+	itemID, err := strconv.Atoi(c.Param("item_id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID do item deve ser um número"})
+	}
 
 	if err := h.Repo.AddItem(uint(locID), uint(itemID)); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao vincular item ao local"})
@@ -107,17 +121,21 @@ func (h *LocationHandler) GetByID(c echo.Context) error {
 	}
 
 	// Get monsters drops
+	seenDrops := make(map[uint]bool)
 	for _, ent := range location.Entities {
 		resp.Entities = append(
 			resp.Entities, response.MinimalResource{ID: ent.ID, Name: ent.Name, Type: string(ent.Type)})
 
 		for _, drop := range ent.Drops {
-			resp.EntityDrops = append(
-				resp.EntityDrops,
-				response.MinimalResource{
-					ID:   drop.ID,
-					Name: drop.Name,
-					Type: string(drop.Type)})
+			if !seenDrops[drop.ID] {
+				seenDrops[drop.ID] = true
+				resp.EntityDrops = append(
+					resp.EntityDrops,
+					response.MinimalResource{
+						ID:   drop.ID,
+						Name: drop.Name,
+						Type: string(drop.Type)})
+			}
 		}
 	}
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/models"
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/repository"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 type ItemHandler struct {
@@ -43,12 +45,47 @@ func (h *ItemHandler) Create(c echo.Context) error {
 }
 
 func (h *ItemHandler) GetByID(c echo.Context) error {
-	id, _ := strconv.Atoi(c.Param("id"))
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número"})
+	}
+
 	item, err := h.Repo.GetByID(uint(id))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "Item não encontrado"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Item não encontrado"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusOK, item)
+
+	resp := response.ItemResponse{
+		ID:         item.ID,
+		Name:       item.Name,
+		Type:       string(item.Type),
+		Lore:       item.Lore,
+		ImageURL:   item.ImageURL,
+		Properties: item.Properties,
+		Locations:  []response.MinimalResource{},
+		DroppedBy:  []response.MinimalResource{},
+	}
+
+	for _, loc := range item.Locations {
+		resp.Locations = append(resp.Locations, response.MinimalResource{
+			ID:   loc.ID,
+			Name: loc.Name,
+			Type: string(loc.Type),
+		})
+	}
+
+	for _, ent := range item.DroppedBy {
+		resp.DroppedBy = append(resp.DroppedBy, response.MinimalResource{
+			ID:   ent.ID,
+			Name: ent.Name,
+			Type: string(ent.Type),
+		})
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
 
 func (h *ItemHandler) GetAll(c echo.Context) error {
