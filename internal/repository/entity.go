@@ -15,24 +15,6 @@ func (r *EntityRepository) Create(entity *models.Entity) error {
 	return r.DB.Create(entity).Error
 }
 
-// AddEntity vinc a Monster/NPC that exists and a Local that exists
-func (r *LocationRepository) AddEntity(locationID uint, entityID uint) error {
-	location := models.Location{ID: locationID}
-	entity := models.Entity{ID: entityID}
-
-	// GORM going to in 'location_entities' and insert (location_id, entity_id)
-	return r.DB.Model(&location).Association("Entities").Append(&entity)
-}
-
-// AddItem vinc a Item that exists and a Local that exists
-func (r *LocationRepository) AddItem(locationID uint, itemID uint) error {
-	location := models.Location{ID: locationID}
-	item := models.Item{ID: itemID}
-
-	// GORM going to in 'location_items' and insert (location_id, item_id)
-	return r.DB.Model(&location).Association("Items").Append(&item)
-}
-
 // AddDrop vinc a Item that exists and a Entity that exists
 func (r *EntityRepository) AddDrop(entityID uint, itemID uint) error {
 	entity := models.Entity{ID: entityID}
