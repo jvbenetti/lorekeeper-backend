@@ -1,0 +1,85 @@
+@baseUrl = http://localhost:8080/api/v1
+# Cole aqui o token retornado no login ou use a variável automática do REST Client (@name login)
+@token = {{login.response.body.token}}
+
+### 1. Login como Admin (Sucesso - 200 OK)
+# @name login
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "123"
+}
+
+###
+
+### 2. Login com credenciais inválidas (Deve falhar - 401 Unauthorized)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "senha_errada"
+}
+
+###
+
+### 3. Rota Pública (Sem Token) - Buscar Entidades (Deve funcionar - 200 OK)
+GET {{baseUrl}}/entities
+Accept: application/json
+
+###
+
+### 4. Rota Protegida SEM Token - Tentar criar Entidade (Deve bloquear - 401 Unauthorized)
+POST {{baseUrl}}/entities
+Content-Type: application/json
+
+{
+  "name": "Invasor Sem Token",
+  "type": "MONSTER",
+  "lore": "Não deveria ser salvo no banco."
+}
+
+###
+
+### 5. Rota Protegida COM Token Admin - Criar Entidade (Deve funcionar - 201 Created)
+POST {{baseUrl}}/entities
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Guardião do Trono",
+  "type": "MONSTER",
+  "lore": "Criado apenas pelo Mestre autenticado.",
+  "image_url": "https://url-do-supabase.com/guardiao.png",
+  "stats": {
+    "armor_class": 18,
+    "hit_points": "95 (10d10 + 40)",
+    "speed": "9 m."
+  }
+}
+
+###
+
+### 6. Rota Protegida COM Token Admin - Editar Entidade (Deve funcionar - 200 OK)
+PUT {{baseUrl}}/entities/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Goblin Saqueador (Editado pelo Admin)",
+  "type": "MONSTER",
+  "lore": "Lore atualizado com permissão de administrador."
+}
+
+###
+
+### 7. Rota Protegida SEM Token - Tentar deletar Entidade (Deve bloquear - 401 Unauthorized)
+DELETE {{baseUrl}}/entities/1
+
+###
+
+### 8. Rota Protegida COM Token Admin - Deletar Entidade (Deve funcionar - 200 OK)
+DELETE {{baseUrl}}/entities/1
+Authorization: Bearer {{token}}
