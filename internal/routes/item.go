@@ -5,10 +5,13 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func ItemRoutes(g *echo.Group, h *handlers.ItemHandler) {
-	g.POST("/items", h.Create)
-	g.GET("/items", h.GetAll)
-	g.GET("/items/:id", h.GetByID)
-	g.PUT("/items/:id", h.Update)
-	g.DELETE("/items/:id", h.Delete)
+func ItemRoutes(public *echo.Group, admin *echo.Group, h *handlers.ItemHandler) {
+	// Public routes (Read-only)
+	public.GET("/items", h.GetAll)
+	public.GET("/items/:id", h.GetByID)
+
+	// Admin routes (Protected by JWT)
+	admin.POST("/items", h.Create)
+	admin.PUT("/items/:id", h.Update)
+	admin.DELETE("/items/:id", h.Delete)
 }

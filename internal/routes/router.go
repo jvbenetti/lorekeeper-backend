@@ -23,9 +23,9 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	locationHandler := &handlers.LocationHandler{Repo: locationRepo}
 	itemHandler := &handlers.ItemHandler{Repo: itemRepo}
 
-	// 3. Creating base group
+	// 3. Creating base group (public) and protected group (admin)
 	api := e.Group("/api/v1")
-	admin := e.Group("/api/v1")
+	admin := api.Group("")
 	admin.Use(echojwt.WithConfig(echojwt.Config{
 		SigningKey: []byte(os.Getenv("JWT_SECRET")),
 	}))
@@ -33,7 +33,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	// 4. Register routes
 	AuthRoutes(api)
 
-	EntityRoutes(api, entityHandler)
-	LocationRoutes(api, locationHandler)
-	ItemRoutes(api, itemHandler)
+	EntityRoutes(api, admin, entityHandler)
+	LocationRoutes(api, admin, locationHandler)
+	ItemRoutes(api, admin, itemHandler)
 }

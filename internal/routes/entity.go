@@ -6,14 +6,17 @@ import (
 )
 
 // EntityRoutes all routes about Entity
-func EntityRoutes(g *echo.Group, h *handlers.EntityHandler) {
-	g.POST("/entities", h.Create)
-	g.GET("/entities", h.GetAll)
-	g.GET("/entities/:id", h.GetByID)
-	g.PUT("/entities/:id", h.Update)
-	g.DELETE("/entities/:id", h.Delete)
+func EntityRoutes(public *echo.Group, admin *echo.Group, h *handlers.EntityHandler) {
+	// Public routes (Read-only)
+	public.GET("/entities", h.GetAll)
+	public.GET("/entities/:id", h.GetByID)
 
-	// Routes Many-to-Many
-	g.POST("/entities/:id/drops/:item_id", h.AddDrop)
-	g.DELETE("/entities/:id/drops/:item_id", h.RemoveDrop)
+	// Admin routes (Protected by JWT)
+	admin.POST("/entities", h.Create)
+	admin.PUT("/entities/:id", h.Update)
+	admin.DELETE("/entities/:id", h.Delete)
+
+	// Routes Many-to-Many (Admin only)
+	admin.POST("/entities/:id/drops/:item_id", h.AddDrop)
+	admin.DELETE("/entities/:id/drops/:item_id", h.RemoveDrop)
 }

@@ -23,9 +23,10 @@ func Login(c echo.Context) error {
 
 	expectedUser := os.Getenv("ADMIN_USERNAME")
 	expectedPass := os.Getenv("ADMIN_PASSWORD")
+	jwtSecret := os.Getenv("JWT_SECRET")
 
-	if expectedUser == "" || expectedPass == "" {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Credenciais não configuradas no servidor"})
+	if expectedUser == "" || expectedPass == "" || jwtSecret == "" {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Credenciais ou JWT_SECRET não configurados no servidor"})
 	}
 
 	// Valida usuário e senha
@@ -40,7 +41,6 @@ func Login(c echo.Context) error {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	jwtSecret := os.Getenv("JWT_SECRET")
 	t, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao gerar token"})
