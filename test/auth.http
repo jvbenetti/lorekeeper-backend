@@ -1,17 +1,17 @@
 @baseUrl = http://localhost:8080/api/v1
-# Cole aqui o token retornado no login ou use a variável automática do REST Client (@name login)
-@token = {{login.response.body.token}}
 
 ### 1. Login como Admin (Sucesso - 200 OK)
-# @name login
 POST {{baseUrl}}/login
 Content-Type: application/json
 
 {
-  "username": "admin",
-  "password": "123"
+  "username": "-",
+  "password": "-"
 }
 
+> {%
+    client.global.set("token", response.body.token);
+%}
 ###
 
 ### 2. Login com credenciais inválidas (Deve falhar - 401 Unauthorized)
