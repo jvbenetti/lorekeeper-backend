@@ -1,6 +1,9 @@
 package routes
 
 import (
+	"os"
+
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 
@@ -22,8 +25,14 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 
 	// 3. Creating base group
 	api := e.Group("/api/v1")
+	admin := e.Group("/api/v1")
+	admin.Use(echojwt.WithConfig(echojwt.Config{
+		SigningKey: []byte(os.Getenv("JWT_SECRET")),
+	}))
 
 	// 4. Register routes
+	AuthRoutes(api)
+
 	EntityRoutes(api, entityHandler)
 	LocationRoutes(api, locationHandler)
 	ItemRoutes(api, itemHandler)
