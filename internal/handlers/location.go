@@ -47,6 +47,9 @@ func (h *LocationHandler) AddEntity(c echo.Context) error {
 	}
 
 	if err := h.Repo.AddEntity(uint(locID), uint(entID)); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Local ou entidade não encontrado"})
+		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao vincular entidade ao local"})
 	}
 
@@ -68,6 +71,9 @@ func (h *LocationHandler) AddItem(c echo.Context) error {
 	}
 
 	if err := h.Repo.AddItem(uint(locID), uint(itemID)); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Local ou item não encontrado"})
+		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao vincular item ao local"})
 	}
 
@@ -89,6 +95,9 @@ func (h *LocationHandler) RemoveEntity(c echo.Context) error {
 	}
 
 	if err := h.Repo.RemoveEntity(uint(locID), uint(entID)); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Local ou entidade não encontrado"})
+		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao remover entidade do local"})
 	}
 
@@ -110,6 +119,9 @@ func (h *LocationHandler) RemoveItem(c echo.Context) error {
 	}
 
 	if err := h.Repo.RemoveItem(uint(locID), uint(itemID)); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Local ou item não encontrado"})
+		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao remover item do local"})
 	}
 

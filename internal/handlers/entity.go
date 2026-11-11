@@ -61,6 +61,9 @@ func (h *EntityHandler) AddDrop(c echo.Context) error {
 	}
 
 	if err := h.Repo.AddDrop(uint(entID), uint(itemID)); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Entidade ou item não encontrado"})
+		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao vincular drop ao monstro"})
 	}
 	return c.JSON(http.StatusOK, map[string]string{
@@ -81,6 +84,9 @@ func (h *EntityHandler) RemoveDrop(c echo.Context) error {
 	}
 
 	if err := h.Repo.RemoveDrop(uint(entID), uint(itemID)); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Entidade ou item não encontrado"})
+		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao remover drop da entidade"})
 	}
 

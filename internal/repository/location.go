@@ -16,8 +16,15 @@ func (r *LocationRepository) Create(location *models.Location) error {
 
 // AddEntity vinc a Monster/NPC that exists and a Local that exists
 func (r *LocationRepository) AddEntity(locationID uint, entityID uint) error {
-	location := models.Location{ID: locationID}
-	entity := models.Entity{ID: entityID}
+	var location models.Location
+	if err := r.DB.First(&location, locationID).Error; err != nil {
+		return err
+	}
+
+	var entity models.Entity
+	if err := r.DB.First(&entity, entityID).Error; err != nil {
+		return err
+	}
 
 	// GORM going to in 'location_entities' and insert (location_id, entity_id)
 	return r.DB.Model(&location).Association("Entities").Append(&entity)
@@ -25,16 +32,30 @@ func (r *LocationRepository) AddEntity(locationID uint, entityID uint) error {
 
 // RemoveEntity remove the relation between a Location and an Entity
 func (r *LocationRepository) RemoveEntity(locationID uint, entityID uint) error {
-	location := models.Location{ID: locationID}
-	entity := models.Entity{ID: entityID}
+	var location models.Location
+	if err := r.DB.First(&location, locationID).Error; err != nil {
+		return err
+	}
+
+	var entity models.Entity
+	if err := r.DB.First(&entity, entityID).Error; err != nil {
+		return err
+	}
 
 	return r.DB.Model(&location).Association("Entities").Delete(&entity)
 }
 
 // AddItem vinc a Item that exists and a Local that exists
 func (r *LocationRepository) AddItem(locationID uint, itemID uint) error {
-	location := models.Location{ID: locationID}
-	item := models.Item{ID: itemID}
+	var location models.Location
+	if err := r.DB.First(&location, locationID).Error; err != nil {
+		return err
+	}
+
+	var item models.Item
+	if err := r.DB.First(&item, itemID).Error; err != nil {
+		return err
+	}
 
 	// GORM going to in 'location_items' and insert (location_id, item_id)
 	return r.DB.Model(&location).Association("Items").Append(&item)
@@ -86,7 +107,15 @@ func (r *LocationRepository) Delete(id uint) error {
 }
 
 func (r *LocationRepository) RemoveItem(locationID uint, itemID uint) error {
-	location := models.Location{ID: locationID}
-	item := models.Item{ID: itemID}
+	var location models.Location
+	if err := r.DB.First(&location, locationID).Error; err != nil {
+		return err
+	}
+
+	var item models.Item
+	if err := r.DB.First(&item, itemID).Error; err != nil {
+		return err
+	}
+
 	return r.DB.Model(&location).Association("Items").Delete(&item)
 }

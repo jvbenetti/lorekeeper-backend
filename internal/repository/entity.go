@@ -18,8 +18,15 @@ func (r *EntityRepository) Create(entity *models.Entity) error {
 
 // AddDrop vinc a Item that exists and a Entity that exists
 func (r *EntityRepository) AddDrop(entityID uint, itemID uint) error {
-	entity := models.Entity{ID: entityID}
-	item := models.Item{ID: itemID}
+	var entity models.Entity
+	if err := r.DB.First(&entity, entityID).Error; err != nil {
+		return err
+	}
+
+	var item models.Item
+	if err := r.DB.First(&item, itemID).Error; err != nil {
+		return err
+	}
 
 	// O GORM vai na tabela invisível 'entity_drops' e insere a relação (entity_id, item_id)
 	return r.DB.Model(&entity).Association("Drops").Append(&item)
@@ -27,8 +34,15 @@ func (r *EntityRepository) AddDrop(entityID uint, itemID uint) error {
 
 // RemoveDrop remove the relation between an Entity and an Item drop
 func (r *EntityRepository) RemoveDrop(entityID uint, itemID uint) error {
-	entity := models.Entity{ID: entityID}
-	item := models.Item{ID: itemID}
+	var entity models.Entity
+	if err := r.DB.First(&entity, entityID).Error; err != nil {
+		return err
+	}
+
+	var item models.Item
+	if err := r.DB.First(&item, itemID).Error; err != nil {
+		return err
+	}
 
 	return r.DB.Model(&entity).Association("Drops").Delete(&item)
 }
