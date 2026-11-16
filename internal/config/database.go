@@ -23,12 +23,18 @@ func ConnectDatabase() *gorm.DB {
 		log.Fatal("ERRO: DATABASE_URL não está configurada!")
 	}
 
+	// Configure logger level based on environment
+	logMode := logger.Warn
+	if os.Getenv("APP_ENV") == "development" {
+		logMode = logger.Info
+	}
+
 	// Connect PostgreSQL in Supabase
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  dsn,
 		PreferSimpleProtocol: true, // To Supabase
 	}), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logMode),
 	})
 	if err != nil {
 		log.Fatal("Falha ao conectar no banco de dados: ", err)

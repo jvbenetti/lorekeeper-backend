@@ -1,15 +1,19 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/jvbenetti/lorekeeper-backend.git/internal/dto/request"
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/dto/response"
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/models"
 	"github.com/jvbenetti/lorekeeper-backend.git/internal/repository"
 	"github.com/labstack/echo/v4"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -17,31 +21,72 @@ type EntityHandler struct {
 	Repo *repository.EntityRepository // Repository Injection
 }
 
+func parseAndSanitizeStats(raw json.RawMessage) (datatypes.JSON, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		return nil, nil
+	}
+
+	var stats models.MonsterStats
+	decoder := json.NewDecoder(bytes.NewReader(trimmed))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&stats); err != nil {
+		return nil, err
+	}
+
+	cleanBytes, err := json.Marshal(stats)
+	if err != nil {
+		return nil, err
+	}
+	return datatypes.JSON(cleanBytes), nil
+}
+
 // Create handle with create route
 func (h *EntityHandler) Create(c echo.Context) error {
-	var entity models.Entity
+	var req request.CreateEntityRequest
 
-	if err := c.Bind(&entity); err != nil {
+	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Formato de dados inválido"})
 	}
 
-	if !entity.Type.IsValid() {
+	name, err := request.ValidateName(req.Name)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	if !req.Type.IsValid() {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Tipo de local entidade inválido. Tipos permitidos: NPC, GOD, MONSTER, DEMIGOD",
 		})
 	}
 
-	if len(entity.Stats) > 0 {
-		var stats models.MonsterStats
-		if err := json.Unmarshal(entity.Stats, &stats); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{
-				"error": "O formato dos atributos (stats) da entidade está incorreto",
-			})
-		}
+	if err := request.ValidateLore(req.Lore); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	imageURL, err := request.ValidateImageURL(req.ImageURL)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	cleanStats, err := parseAndSanitizeStats(req.Stats)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "O formato dos atributos (stats) da entidade está incorreto",
+		})
+	}
+
+	entity := models.Entity{
+		Name:     name,
+		Type:     req.Type,
+		Lore:     req.Lore,
+		ImageURL: imageURL,
+		Stats:    cleanStats,
 	}
 
 	// Call repo to save
 	if err := h.Repo.Create(&entity); err != nil {
+		c.Logger().Errorf("Erro ao salvar entidade: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao salvar entidade"})
 	}
 
@@ -51,19 +96,20 @@ func (h *EntityHandler) Create(c echo.Context) error {
 // AddDrop lida com a rota POST /entities/:id/drops/:item_id
 func (h *EntityHandler) AddDrop(c echo.Context) error {
 	entID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID da entidade deve ser um número"})
+	if err != nil || entID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID da entidade deve ser um número válido"})
 	}
 
 	itemID, err := strconv.Atoi(c.Param("item_id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID do item deve ser um número"})
+	if err != nil || itemID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID do item deve ser um número válido"})
 	}
 
 	if err := h.Repo.AddDrop(uint(entID), uint(itemID)); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, map[string]string{"error": "Entidade ou item não encontrado"})
 		}
+		c.Logger().Errorf("Erro ao vincular drop: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao vincular drop ao monstro"})
 	}
 	return c.JSON(http.StatusOK, map[string]string{
@@ -74,19 +120,20 @@ func (h *EntityHandler) AddDrop(c echo.Context) error {
 // RemoveDrop lida com a rota DELETE /entities/:id/drops/:item_id
 func (h *EntityHandler) RemoveDrop(c echo.Context) error {
 	entID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID da entidade deve ser um número"})
+	if err != nil || entID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID da entidade deve ser um número válido"})
 	}
 
 	itemID, err := strconv.Atoi(c.Param("item_id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID do item deve ser um número"})
+	if err != nil || itemID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID do item deve ser um número válido"})
 	}
 
 	if err := h.Repo.RemoveDrop(uint(entID), uint(itemID)); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, map[string]string{"error": "Entidade ou item não encontrado"})
 		}
+		c.Logger().Errorf("Erro ao remover drop: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao remover drop da entidade"})
 	}
 
@@ -99,8 +146,8 @@ func (h *EntityHandler) RemoveDrop(c echo.Context) error {
 func (h *EntityHandler) GetByID(c echo.Context) error {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número"})
+	if err != nil || id <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número válido"})
 	}
 
 	entity, err := h.Repo.GetByID(uint(id))
@@ -108,7 +155,8 @@ func (h *EntityHandler) GetByID(c echo.Context) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, map[string]string{"error": "Entidade não encontrada"})
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Errorf("Erro ao buscar entidade %d: %v", id, err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro interno ao buscar entidade"})
 	}
 
 	// Montando a resposta enxuta
@@ -145,12 +193,17 @@ func (h *EntityHandler) GetByID(c echo.Context) error {
 
 func (h *EntityHandler) GetAll(c echo.Context) error {
 	// Pega os valores da URL (ex: ?type=GOD&search=podridão)
-	entityType := c.QueryParam("type")
-	search := c.QueryParam("search")
+	entityType := strings.TrimSpace(c.QueryParam("type"))
+	search := strings.TrimSpace(c.QueryParam("search"))
+
+	if len(search) > request.MaxSearchLength {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Termo de busca muito longo"})
+	}
 
 	// Passa pro repositório
 	entities, err := h.Repo.GetAll(entityType, search)
 	if err != nil {
+		c.Logger().Errorf("Erro ao listar entidades: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao buscar entidades"})
 	}
 
@@ -169,8 +222,8 @@ func (h *EntityHandler) GetAll(c echo.Context) error {
 // Update handle with PUT /entities/:id
 func (h *EntityHandler) Update(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número"})
+	if err != nil || id <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número válido"})
 	}
 
 	entity, err := h.Repo.GetByID(uint(id))
@@ -178,30 +231,59 @@ func (h *EntityHandler) Update(c echo.Context) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, map[string]string{"error": "Entidade não encontrada"})
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Errorf("Erro ao buscar entidade %d: %v", id, err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro interno ao buscar entidade"})
 	}
 
-	if err := c.Bind(entity); err != nil {
+	var req request.UpdateEntityRequest
+	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Formato de dados inválido"})
 	}
-	entity.ID = uint(id)
 
-	if !entity.Type.IsValid() {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Tipo de local entidade inválido. Tipos permitidos: NPC, GOD, MONSTER, DEMIGOD",
-		})
+	if req.Name != nil {
+		name, err := request.ValidateName(*req.Name)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		}
+		entity.Name = name
 	}
 
-	if len(entity.Stats) > 0 {
-		var stats models.MonsterStats
-		if err := json.Unmarshal(entity.Stats, &stats); err != nil {
+	if req.Type != nil {
+		if !req.Type.IsValid() {
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"error": "Tipo de local entidade inválido. Tipos permitidos: NPC, GOD, MONSTER, DEMIGOD",
+			})
+		}
+		entity.Type = *req.Type
+	}
+
+	if req.Lore != nil {
+		if err := request.ValidateLore(*req.Lore); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		}
+		entity.Lore = *req.Lore
+	}
+
+	if req.ImageURL != nil {
+		imageURL, err := request.ValidateImageURL(*req.ImageURL)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		}
+		entity.ImageURL = imageURL
+	}
+
+	if len(req.Stats) > 0 {
+		cleanStats, err := parseAndSanitizeStats(req.Stats)
+		if err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{
 				"error": "O formato dos atributos (stats) da entidade está incorreto",
 			})
 		}
+		entity.Stats = cleanStats
 	}
 
 	if err := h.Repo.Update(entity); err != nil {
+		c.Logger().Errorf("Erro ao atualizar entidade %d: %v", id, err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao atualizar entidade"})
 	}
 
@@ -211,14 +293,15 @@ func (h *EntityHandler) Update(c echo.Context) error {
 // Delete handle with DELETE /entities/:id
 func (h *EntityHandler) Delete(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número"})
+	if err != nil || id <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "ID deve ser um número válido"})
 	}
 
 	if err := h.Repo.Delete(uint(id)); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, map[string]string{"error": "Entidade não encontrada"})
 		}
+		c.Logger().Errorf("Erro ao deletar entidade %d: %v", id, err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Erro ao deletar entidade"})
 	}
 

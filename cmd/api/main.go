@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -14,10 +15,13 @@ import (
 
 func main() {
 	e := echo.New()
+	e.HideBanner = true
 
-	// Global Middlewares
+	// Global Security & Observability Middlewares
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.Secure())
+	e.Use(middleware.BodyLimit("1M"))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
@@ -43,6 +47,14 @@ func main() {
 		port = "8080"
 	}
 
+	server := &http.Server{
+		Addr:              ":" + port,
+		ReadTimeout:       15 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
 	log.Printf("Starting server on port %s", port)
-	e.Logger.Fatal(e.Start(":" + port))
+	e.Logger.Fatal(e.StartServer(server))
 }

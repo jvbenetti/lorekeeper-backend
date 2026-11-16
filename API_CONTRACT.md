@@ -8,8 +8,18 @@
 - **Local Base URL:** `http://localhost:8080/api/v1`
 - **Health Check URL:** `GET http://localhost:8080/health` (Público) -> `{ "status": "online", "world": "lorekeeper api" }`
 - **Auth Header (Rotas Admin 🔒):** `Authorization: Bearer <token>`
-- **Formato Padrão de Erro (`400`, `401`, `404`, `500`):** `{ "error": "string" }`
+- **Formato Padrão de Erro (`400`, `401`, `404`, `429`, `500`):** `{ "error": "string" }`
 - **Formato Padrão de Mensagem (`200` em ações/deletes):** `{ "message": "string" }`
+- **Proteções & Limites Globais:**
+    - **Body Limit:** `1MB` máximo por requisição.
+    - **Rate Limiting Geral (`/api/v1/*`):** `10 req/s` (burst de `30`) por IP -> retorna `429 Too Many Requests`.
+    - **Rate Limiting Login (`POST /api/v1/login`):** `5 req/min` (burst de `5`) por IP -> retorna `429 Too Many Requests`.
+    - **Validações de Campos:**
+        - `name`: Obrigatório na criação, não pode ser vazio, máximo `255` caracteres.
+        - `image_url`: Opcional, mas quando enviado deve ser uma URL `http`/`https` válida de no máximo `500` caracteres.
+        - `lore`: Opcional, máximo `50.000` caracteres.
+        - `stats` e `properties`: Validados de forma estrita (campos desconhecidos fora do schema retornam `400 Bad Request`).
+        - `search` / `rarity` (Query Params): Máximo `100` caracteres.
 
 ---
 
@@ -23,9 +33,12 @@
 ## 2. Endpoints
 
 ### Auth
-- **POST `/login`** (Público)
+- **POST `/login`** (Público - Rate Limited)
     - Request: `{ "username": "string", "password": "string" }`
-    - Response `200 OK`: `{ "token": "string" }` (válido por 72h)
+    - Response `200 OK`: `{ "token": "string" }` (válido por 12h, assinado com `HS256`)
+    - Response `400 Bad Request`: `{ "error": "Usuário e senha são obrigatórios" }`
+    - Response `401 Unauthorized`: `{ "error": "Credenciais incorretas" }`
+    - Response `429 Too Many Requests`: `{ "error": "Muitas tentativas de login. Aguarde um momento e tente novamente." }`
 
 ### Entities (Monstros, NPCs, Deuses, Semideuses)
 - **GET `/entities`** (Público)
@@ -37,16 +50,16 @@
     - Request: `{ "name": "string", "type": "EntityType", "lore": "string", "image_url": "string", "stats": MonsterStats }`
     - Response `201 Created`: Entidade criada
 - **PUT `/entities/:id`** (Admin 🔒)
-    - Request: `{ "name"?: "string", "type": "EntityType", "lore"?: "string", "image_url"?: "string", "stats"?: MonsterStats }`
-    - Response `200 OK`: Entidade atualizada
+    - Request (Atualização Parcial ou Completa): `{ "name"?: "string", "type"?: "EntityType", "lore"?: "string", "image_url"?: "string", "stats"?: MonsterStats }`
+    - Response `200 OK`: Entidade atualizada (`404 Not Found` se não existir)
 - **DELETE `/entities/:id`** (Admin 🔒)
-    - Response `200 OK`: `{ "message": "Entidade removida com sucesso" }`
+    - Response `200 OK`: `{ "message": "Entidade removida com sucesso" }` (`404 Not Found` se não existir)
 - **POST `/entities/:id/drops/:item_id`** (Admin 🔒)
     - Vincula um item existente aos drops da entidade. Sem body.
-    - Response `200 OK`: `{ "message": "Item adicionado aos drops do monstro com sucesso" }`
+    - Response `200 OK`: `{ "message": "Item adicionado aos drops do monstro com sucesso" }` (`404 Not Found` se entidade ou item não existir)
 - **DELETE `/entities/:id/drops/:item_id`** (Admin 🔒)
-    - Remove o vínculo de um item dos drops da entidade. Sem body.
-    - Response `200 OK`: `{ "message": "Item removido dos drops da entidade com sucesso" }`
+    - Remove o vínculo de um item dos drops da entidade (sem deletar o item do banco). Sem body.
+    - Response `200 OK`: `{ "message": "Item removido dos drops da entidade com sucesso" }` (`404 Not Found` se entidade ou item não existir)
 
 ### Locations (Cidades, Dungeons, Castelos, etc.)
 - **GET `/locations`** (Público)
@@ -58,22 +71,22 @@
     - Request: `{ "name": "string", "type": "LocationType", "lore": "string", "image_url": "string", "parent_id"?: number | null }`
     - Response `201 Created`: Local criado
 - **PUT `/locations/:id`** (Admin 🔒)
-    - Request: `{ "name"?: "string", "type": "LocationType", "lore"?: "string", "image_url"?: "string", "parent_id"?: number | null }`
-    - Response `200 OK`: Local atualizado
+    - Request (Atualização Parcial ou Completa): `{ "name"?: "string", "type"?: "LocationType", "lore"?: "string", "image_url"?: "string", "parent_id"?: number | null }`
+    - Response `200 OK`: Local atualizado (`404 Not Found` se não existir)
 - **DELETE `/locations/:id`** (Admin 🔒)
-    - Response `200 OK`: `{ "message": "Local removido com sucesso" }`
+    - Response `200 OK`: `{ "message": "Local removido com sucesso" }` (`404 Not Found` se não existir)
 - **POST `/locations/:id/entities/:entity_id`** (Admin 🔒)
     - Vincula uma entidade existente ao local. Sem body.
-    - Response `200 OK`: `{ "message": "Entidade vinculada ao local com sucesso" }`
+    - Response `200 OK`: `{ "message": "Entidade vinculada ao local com sucesso" }` (`404 Not Found` se local ou entidade não existir)
 - **DELETE `/locations/:id/entities/:entity_id`** (Admin 🔒)
-    - Remove o vínculo da entidade com o local. Sem body.
-    - Response `200 OK`: `{ "message": "Entidade removida do local com sucesso" }`
+    - Remove o vínculo da entidade com o local (sem deletar a entidade do banco). Sem body.
+    - Response `200 OK`: `{ "message": "Entidade removida do local com sucesso" }` (`404 Not Found` se local ou entidade não existir)
 - **POST `/locations/:id/items/:item_id`** (Admin 🔒)
     - Esconde/vincula um item existente no local. Sem body.
-    - Response `200 OK`: `{ "message": "Item escondido no local com sucesso" }`
+    - Response `200 OK`: `{ "message": "Item escondido no local com sucesso" }` (`404 Not Found` se local ou item não existir)
 - **DELETE `/locations/:id/items/:item_id`** (Admin 🔒)
-    - Remove o item escondido do local. Sem body.
-    - Response `200 OK`: `{ "message": "Item removido do local com sucesso" }`
+    - Remove o vínculo do item escondido no local (sem deletar o item do banco). Sem body.
+    - Response `200 OK`: `{ "message": "Item removido do local com sucesso" }` (`404 Not Found` se local ou item não existir)
 
 ### Items (Armas, Armaduras, Artefatos, Poções)
 - **GET `/items`** (Público)
@@ -85,10 +98,10 @@
     - Request: `{ "name": "string", "type": "ItemType", "lore": "string", "image_url": "string", "properties": ItemProperties }`
     - Response `201 Created`: Item criado
 - **PUT `/items/:id`** (Admin 🔒)
-    - Request: `{ "name"?: "string", "type": "ItemType", "lore"?: "string", "image_url"?: "string", "properties"?: ItemProperties }`
-    - Response `200 OK`: Item atualizado
+    - Request (Atualização Parcial ou Completa): `{ "name"?: "string", "type"?: "ItemType", "lore"?: "string", "image_url"?: "string", "properties"?: ItemProperties }`
+    - Response `200 OK`: Item atualizado (`404 Not Found` se não existir)
 - **DELETE `/items/:id`** (Admin 🔒)
-    - Response `200 OK`: `{ "message": "Item removido com sucesso" }`
+    - Response `200 OK`: `{ "message": "Item removido com sucesso" }` (`404 Not Found` se não existir)
 
 ---
 

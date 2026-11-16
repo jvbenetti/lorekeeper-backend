@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"crypto/subtle"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginRequest struct {
@@ -21,23 +24,41 @@ func Login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Requisição inválida"})
 	}
 
+	req.Username = strings.TrimSpace(req.Username)
+	if req.Username == "" || req.Password == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Usuário e senha são obrigatórios"})
+	}
+
 	expectedUser := os.Getenv("ADMIN_USERNAME")
 	expectedPass := os.Getenv("ADMIN_PASSWORD")
+	expectedPassHash := os.Getenv("ADMIN_PASSWORD_HASH")
 	jwtSecret := os.Getenv("JWT_SECRET")
 
-	if expectedUser == "" || expectedPass == "" || jwtSecret == "" {
+	if expectedUser == "" || (expectedPass == "" && expectedPassHash == "") || jwtSecret == "" {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Credenciais ou JWT_SECRET não configurados no servidor"})
 	}
 
-	// Valida usuário e senha
-	if req.Username != expectedUser || req.Password != expectedPass {
+	// Comparação em tempo constante para evitar Timing Attacks
+	userMatch := subtle.ConstantTimeCompare([]byte(req.Username), []byte(expectedUser)) == 1
+
+	var passMatch bool
+	if expectedPassHash != "" {
+		passMatch = bcrypt.CompareHashAndPassword([]byte(expectedPassHash), []byte(req.Password)) == nil
+	} else {
+		passMatch = subtle.ConstantTimeCompare([]byte(req.Password), []byte(expectedPass)) == 1
+	}
+
+	if !userMatch || !passMatch {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Credenciais incorretas"})
 	}
 
-	// Gera o token válido por 72 horas
+	now := time.Now()
 	claims := &jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
-		Subject:   req.Username,
+		Issuer:    "lorekeeper-api",
+		Subject:   expectedUser,
+		IssuedAt:  jwt.NewNumericDate(now),
+		NotBefore: jwt.NewNumericDate(now),
+		ExpiresAt: jwt.NewNumericDate(now.Add(time.Hour * 12)),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
