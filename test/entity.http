@@ -29,7 +29,7 @@ Content-Type: application/json
 ###
 
 ### Buscar um Monstro por ID
-GET http://localhost:8080/api/v1/entities/1
+GET https://lorekeeper-backend-production.up.railway.app/api/v1/entities/2
 Accept: application/json
 
 
@@ -125,13 +125,14 @@ Content-Type: application/json
 ###
 
 ### Criar um NPC
-POST http://localhost:8080/api/v1/entities
+POST https://lorekeeper-backend-production.up.railway.app/api/v1/entities
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
-  "name": "Elara, a Tecelã de Segredos",
+  "name": "Expancionista de dominio",
   "type": "NPC",
-  "lore": "A dona da taverna 'Corvo Cego'. Ela sabe quem entra e sai de Lamúria e vende essas informações pelo preço certo.",
+  "lore": "Expande o dominio muito bem",
   "image_url": "https://url-do-supabase.com/elara-npc.png",
   "stats": {
     "armor_class": 12,
