@@ -130,12 +130,12 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "name": "Expancionista de dominio",
-  "type": "NPC",
-  "lore": "Expande o dominio muito bem",
+  "name": "Coveiro Alado",
+  "type": "MONSTER",
+  "lore": "Ser do abismo que possui assas de penas negras de pura sombra",
   "image_url": "https://url-do-supabase.com/elara-npc.png",
   "stats": {
-    "armor_class": 12,
+    "armor_class": 14,
     "hit_points": "22 (4d8 + 4)",
     "speed": "9 m.",
     "attributes": {
@@ -144,14 +144,14 @@ Authorization: Bearer {{token}}
       "CON": 12,
       "INT": 16,
       "WIS": 16,
-      "CHA": 18
+      "CHA": 5
     },
     "skills": ["Deception +6", "Insight +5", "Persuasion +6"],
     "languages": ["Common", "Thieves' Cant"],
     "challenge_rating": "1 (200 XP)",
     "actions": [
       {
-        "name": "Adaga Escondida",
+        "name": "Avanço de Penas Negras",
         "type": "Melee Weapon Attack",
         "hit": "+4",
         "reach": "1.5 m.",
